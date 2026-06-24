@@ -1,16 +1,15 @@
-name: Sync from upstream Excalidraw
+name: Sync upstream and deploy DrawPond
 
 on:
   schedule:
-    # Run weekly on Sunday at 3am UTC
-    - cron: '0 3 * * 0'
-  workflow_dispatch: # Allow manual trigger
+    - cron: '0 3 * * 0'  # Weekly on Sunday at 3am UTC
+  workflow_dispatch:
 
 jobs:
-  sync:
+  sync-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout DrawPond fork
         uses: actions/checkout@v4
         with:
           ref: drawpond-branding
@@ -22,23 +21,80 @@ jobs:
           git config user.name "DrawPond Bot"
           git config user.email "bot@drawpond.com"
 
-      - name: Add upstream remote
+      - name: Add upstream and merge
+        id: merge
         run: |
           git remote add upstream https://github.com/excalidraw/excalidraw.git
           git fetch upstream master
-
-      - name: Merge upstream changes
-        id: merge
-        run: |
-          git merge upstream/master --no-edit || echo "MERGE_CONFLICT=true" >> $GITHUB_OUTPUT
+          git merge upstream/master --no-edit
         continue-on-error: true
 
-      - name: Push if merge succeeded
+      - name: Push merged changes
+        if: steps.merge.outcome == 'success'
+        run: git push origin drawpond-branding
+
+      - name: Setup Node.js
+        if: steps.merge.outcome == 'success'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install and build
         if: steps.merge.outcome == 'success'
         run: |
-          git push origin drawpond-branding
+          yarn install --frozen-lockfile
+          VITE_APP_DISABLE_SENTRY=true yarn --cwd ./excalidraw-app build:app:docker
 
-      - name: Create issue if merge failed
+      - name: Apply branding replacements
+        if: steps.merge.outcome == 'success'
+        run: |
+          cd excalidraw-app/build
+          find . -name "*.js" -exec sed -i 's/Excalidraw+/DrawPond+/g' {} +
+          find . -name "*.js" -exec sed -i 's/EXCALIDRAW/DRAWPOND/g' {} +
+          find . -name "*.js" -exec sed -i 's/excalidraw\.com/drawpond\.com/g' {} +
+          find . -name "*.js" -exec sed -i 's/"Excalidraw"/"DrawPond"/g' {} +
+          find . -name "*.js" -exec sed -i "s/'Excalidraw'/'DrawPond'/g" {} +
+          find . -name "*.js" -exec sed -i 's|plus\.excalidraw\.com|drawpond.com|g' {} +
+          find . -name "*.map" -delete
+          
+      - name: Deploy to Scalingo
+        if: steps.merge.outcome == 'success'
+        env:
+          SCALINGO_API_TOKEN: ${{ secrets.SCALINGO_API_TOKEN }}
+        run: |
+          # Install Scalingo CLI
+          curl -O https://cli-dl.scalingo.com/install && bash install
+          echo "$SCALINGO_API_TOKEN" | scalingo login --api-token -
+          
+          # Prepare deploy package
+          cd excalidraw-app/build
+          cp ../../Procfile .
+          cp ../../package.json .  # Will create a minimal one
+          cat > package.json << 'EOF'
+          {
+            "name": "drawpond-canvas",
+            "version": "1.0.0",
+            "private": true,
+            "engines": { "node": "24.x" },
+            "scripts": { "start": "node server.js" },
+            "dependencies": { "express": "^4.21.0" }
+          }
+          EOF
+          cat > server.js << 'SEOF'
+          const express = require("express");
+          const path = require("path");
+          const app = express();
+          app.use(express.static(__dirname, { maxAge: "1d" }));
+          app.get("*", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
+          app.listen(process.env.PORT || 5000, "0.0.0.0");
+          SEOF
+          npm install
+          
+          # Create archive and deploy
+          tar czf /tmp/deploy.tar.gz --exclude='node_modules' .
+          scalingo -a drawpond-canvas deploy /tmp/deploy.tar.gz
+
+      - name: Create issue on failure
         if: steps.merge.outcome == 'failure'
         uses: actions/github-script@v7
         with:
@@ -46,7 +102,7 @@ jobs:
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Upstream sync failed - merge conflict',
-              body: 'The automatic sync from upstream excalidraw/excalidraw had merge conflicts. Please resolve manually.',
+              title: 'Upstream sync failed',
+              body: 'Automatic sync from upstream excalidraw/excalidraw had merge conflicts. Manual resolution needed.',
               labels: ['upstream-sync']
             })
