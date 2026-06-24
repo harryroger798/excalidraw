@@ -1,0 +1,52 @@
+name: Sync from upstream Excalidraw
+
+on:
+  schedule:
+    # Run weekly on Sunday at 3am UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: drawpond-branding
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "DrawPond Bot"
+          git config user.email "bot@drawpond.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/excalidraw/excalidraw.git
+          git fetch upstream master
+
+      - name: Merge upstream changes
+        id: merge
+        run: |
+          git merge upstream/master --no-edit || echo "MERGE_CONFLICT=true" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Push if merge succeeded
+        if: steps.merge.outcome == 'success'
+        run: |
+          git push origin drawpond-branding
+
+      - name: Create issue if merge failed
+        if: steps.merge.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Upstream sync failed - merge conflict',
+              body: 'The automatic sync from upstream excalidraw/excalidraw had merge conflicts. Please resolve manually.',
+              labels: ['upstream-sync']
+            })
