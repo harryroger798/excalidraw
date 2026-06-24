@@ -2,59 +2,59 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Excalidraw Whiteboard</title>
+    <title>DrawPond Canvas</title>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, shrink-to-fit=no"
     />
     <meta name="referrer" content="origin" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#121212" />
+    <meta name="theme-color" content="#C65D3E" />
 
     <!-- Primary Meta Tags -->
     <meta
       name="title"
-      content="Free, collaborative whiteboard • Hand-drawn look & feel | Excalidraw"
+      content="Free, collaborative whiteboard • Hand-drawn look & feel | DrawPond"
     />
     <meta
       name="description"
-      content="Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+      content="DrawPond is a visual workspace where diagrams and data come alive. Sketch, plan, and collaborate with a hand-drawn feel."
     />
-    <meta name="image" content="https://excalidraw.com/og-image-3.png" />
+    <meta name="image" content="/og-image-3.png" />
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:site_name" content="Excalidraw" />
+    <meta property="og:site_name" content="DrawPond" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://excalidraw.com" />
+    <meta property="og:url" content="https://drawpond.com" />
     <meta
       property="og:title"
-      content="Excalidraw — Collaborative whiteboarding made easy"
+      content="DrawPond — Where ideas meet your canvas"
     />
-    <meta property="og:image:alt" content="Excalidraw logo" />
+    <meta property="og:image:alt" content="DrawPond logo" />
     <meta
       property="og:description"
-      content="Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+      content="DrawPond is a visual workspace where diagrams and data come alive. Sketch, plan, and collaborate with a hand-drawn feel."
     />
-    <meta property="og:image" content="https://excalidraw.com/og-image-3.png" />
+    <meta property="og:image" content="/og-image-3.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:site" content="@excalidraw" />
-    <meta property="twitter:url" content="https://excalidraw.com" />
+    <meta property="twitter:site" content="@drawpond" />
+    <meta property="twitter:url" content="https://drawpond.com" />
     <meta
       property="twitter:title"
-      content="Excalidraw — Collaborative whiteboarding made easy"
+      content="DrawPond — Where ideas meet your canvas"
     />
     <meta
       property="twitter:description"
-      content="Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+      content="DrawPond is a visual workspace where diagrams and data come alive. Sketch, plan, and collaborate with a hand-drawn feel."
     />
     <meta
       property="twitter:image"
-      content="https://excalidraw.com/og-image-3.png"
+      content="/og-image-3.png"
     />
 
-    <link rel="canonical" href="https://excalidraw.com" />
+    <link rel="canonical" href="https://drawpond.com" />
 
     <!------------------------------------------------------------------------->
     <!--   to minimize white flash on load when user has dark mode enabled   -->
@@ -106,15 +106,7 @@
       //
       // Putting into index.html for best performance (can't redirect on server
       // due to location.hash checks).
-      if (
-        window.location.pathname === "/" &&
-        !window.location.hash &&
-        !window.location.search &&
-        // if its present redirect
-        document.cookie.includes("excplus-autoredirect=true")
-      ) {
-        window.location.href = "https://app.excalidraw.com";
-      }
+      // DrawPond: Excalidraw+ redirect disabled
     </script>
 
     <!-- Following placeholder is replaced during the build step -->
@@ -159,7 +151,7 @@
     <% } %>
     <script>
       // setting this so that libraries installation reuses this window tab.
-      window.name = "_excalidraw";
+      window.name = "_drawpond";
     </script>
 
     <!-- FIXME: remove this when we update CRA (fix SW caching) -->
@@ -210,7 +202,7 @@
   <body>
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <header>
-      <h1 class="visually-hidden">Excalidraw</h1>
+      <h1 class="visually-hidden">DrawPond Canvas</h1>
     </header>
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
